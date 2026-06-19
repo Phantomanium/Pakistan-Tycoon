@@ -1,0 +1,31 @@
+# dependencies
+node_modules/
+server/node_modules/
+
+# build output
+dist/
+server/dist/
+
+# env / secrets
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# caches
+.vite/
+.cache/
+*.tsbuildinfo
+
+# editor / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# local agent / tooling config
+.claude/

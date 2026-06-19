@@ -1,0 +1,16 @@
+# Netlify configuration for the Pakistan Tycoon client (static SPA).
+# The multiplayer server (server/) is NOT hosted here — deploy it to a Node
+# host (Render / Railway / Fly) and point the client at it via VITE_SERVER_URL.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# SPA fallback so client-side state survives a refresh on any path.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
