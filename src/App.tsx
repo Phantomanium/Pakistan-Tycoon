@@ -143,7 +143,7 @@ export default function App() {
 
       <main className="game-layout">
         <div className="board-wrap">
-          <Board game={game} rolling={rolling} onTile={(pos) => setSelectedPos(pos)} />
+          <Board game={game} rolling={rolling} canRoll={canAct} onRoll={performRoll} onTile={(pos) => setSelectedPos(pos)} />
         </div>
         <Sidebar
           game={game}

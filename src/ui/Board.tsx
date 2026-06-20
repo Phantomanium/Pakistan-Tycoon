@@ -29,11 +29,16 @@ export default function Board({
   game,
   onTile,
   rolling,
+  canRoll,
+  onRoll,
 }: {
   game: GameState;
   onTile: (pos: number) => void;
   rolling: boolean;
+  canRoll: boolean;
+  onRoll: () => void;
 }) {
+  const cur = game.players[game.currentIndex];
   return (
     <div className="board">
       {BOARD.map((space) => {
@@ -41,6 +46,7 @@ export default function Board({
         const prop = game.properties[space.pos];
         const owner = prop?.ownerId ? game.players.find((p) => p.id === prop.ownerId) : null;
         const here = game.players.filter((p) => p.position === space.pos && !p.bankrupt);
+        const curHere = here.some((p) => p.id === cur.id);
         const isCorner = space.pos % 10 === 0;
         const groupColor =
           space.type === "city" && space.group ? GROUP_COLORS[space.group] : undefined;
@@ -70,16 +76,35 @@ export default function Board({
                 <span className="tile-stage">{STAGE_ICON[prop.stage].repeat(1)}<small>{prop.stage}</small></span>
               )}
             </span>
-            {owner && <span className="tile-owner-flag" style={{ background: owner.color }}>{owner.token}</span>}
+
+            {owner && (
+              <span
+                className="tile-owner-dot"
+                style={{ background: owner.color }}
+                title={`Owned by ${owner.name}`}
+              >
+                <span className="tod-token">{owner.token}</span>
+              </span>
+            )}
+
+            {curHere && (
+              <span className="turn-arrow" style={{ color: cur.color }} aria-hidden>
+                ▾
+              </span>
+            )}
+
             {here.length > 0 && (
               <span className="tile-tokens">
                 {here.map((p) => (
                   <span
                     key={p.id}
-                    className={`tok ${rolling && p.id === game.players[game.currentIndex].id ? "hop" : ""}`}
-                    style={{ borderColor: p.color }}
+                    className={`tok ${p.id === cur.id ? "active" : ""} ${
+                      rolling && p.id === cur.id ? "hop" : ""
+                    }`}
+                    style={{ background: p.color, "--tok": p.color } as React.CSSProperties}
+                    title={p.name}
                   >
-                    {p.token}
+                    <span className="tok-glyph">{p.token}</span>
                   </span>
                 ))}
               </span>
@@ -88,14 +113,27 @@ export default function Board({
         );
       })}
 
-      <BoardCenter game={game} rolling={rolling} />
+      <BoardCenter game={game} rolling={rolling} canRoll={canRoll} onRoll={onRoll} />
     </div>
   );
 }
 
-function BoardCenter({ game, rolling }: { game: GameState; rolling: boolean }) {
+function BoardCenter({
+  game,
+  rolling,
+  canRoll,
+  onRoll,
+}: {
+  game: GameState;
+  rolling: boolean;
+  canRoll: boolean;
+  onRoll: () => void;
+}) {
   const cur = game.players[game.currentIndex];
   const event = game.modifiers[game.modifiers.length - 1];
+  const lastLog = game.log[game.log.length - 1];
+  const canClickRoll = canRoll && game.phase === "preRoll" && !cur.inJail && !rolling;
+
   return (
     <div className="board-center">
       <div className="center-logo">
@@ -104,18 +142,30 @@ function BoardCenter({ game, rolling }: { game: GameState; rolling: boolean }) {
         <span className="center-sub">Property Empire of Pakistan</span>
       </div>
 
-      <div className={`dice-area ${rolling ? "rolling" : ""}`}>
+      <div
+        className={`dice-area ${rolling ? "rolling" : ""} ${canClickRoll ? "clickable" : ""}`}
+        onClick={canClickRoll ? onRoll : undefined}
+        role={canClickRoll ? "button" : undefined}
+        title={canClickRoll ? "Click to roll the dice" : undefined}
+      >
         <Die value={game.dice?.[0] ?? 1} rolling={rolling} />
         <Die value={game.dice?.[1] ?? 1} rolling={rolling} />
       </div>
+      {canClickRoll && <div className="dice-hint">🎲 tap the dice to roll</div>}
 
       <div className="center-turn" style={{ borderColor: cur.color }}>
-        <span className="ct-token">{cur.token}</span>
+        <span className="ct-dot" style={{ background: cur.color }} />
         <span className="ct-name">{cur.name}</span>
         <span className="ct-phase">
           {game.phase === "preRoll" ? (cur.inJail ? "In Central Lockup" : "to roll") : game.phase === "auction" ? "Auction!" : "managing"}
         </span>
       </div>
+
+      {lastLog && (
+        <div key={lastLog.id} className={`center-log k-${lastLog.kind}`}>
+          {lastLog.text}
+        </div>
+      )}
 
       {event && (
         <div className="center-event">

@@ -1,5 +1,12 @@
 import { useMemo, useState } from "react";
-import { BOARD, GROUP_COLORS, GROUP_LABELS, GROUP_POSITIONS, OWNABLE_POSITIONS } from "../game/board";
+import {
+  AIRPORT_BASE_RENT,
+  BOARD,
+  GROUP_COLORS,
+  GROUP_LABELS,
+  GROUP_POSITIONS,
+  OWNABLE_POSITIONS,
+} from "../game/board";
 import {
   auctionBidder,
   canDevelop,
@@ -45,58 +52,85 @@ export function PropertyModal({
   const isMine = prop?.ownerId === cur.id && canAct;
   const groupColor = space.group ? GROUP_COLORS[space.group] : "#888";
 
+  const airportRents = [1, 2, 4, 8].map((m) => AIRPORT_BASE_RENT * m);
+
   return (
     <Backdrop onClose={onClose}>
-      <div className="prop-modal">
-        <div className="prop-band" style={{ background: groupColor }}>
-          {space.group ? GROUP_LABELS[space.group] : space.type.toUpperCase()}
+      <div className="pcard" style={{ "--gc": groupColor } as React.CSSProperties}>
+        <div className="pcard-top" style={{ background: groupColor }} />
+        <div className="pcard-head">
+          {space.group && (
+            <span className="pcard-group" style={{ background: groupColor }}>
+              {GROUP_LABELS[space.group]}
+            </span>
+          )}
+          <h2 className="pcard-title">{space.name}</h2>
+          {prop?.ownerId && owner ? (
+            <div className="pcard-owner">
+              <span className="od" style={{ background: owner.color }} />
+              {owner.name}
+              {prop.mortgaged && " · mortgaged"}
+              {space.type === "city" && prop.stage > 0 && ` · ${STAGE_NAMES[prop.stage]}`}
+            </div>
+          ) : space.price != null ? (
+            <div className="pcard-owner muted">Unowned</div>
+          ) : null}
         </div>
-        <h2 className="prop-title">{space.name}</h2>
-        {space.bonus && <p className="prop-bonus">✨ {space.bonus}</p>}
+
+        {space.bonus && <p className="pcard-bonus">✨ {space.bonus}</p>}
 
         {space.type === "city" && (
-          <table className="rent-table">
-            <tbody>
-              {STAGE_NAMES.map((name, i) => (
-                <tr key={i} className={prop && prop.stage === i ? "active" : ""}>
-                  <td>{name}</td>
-                  <td>{pkr(space.rent![i])}{i === 0 ? " (×2 with full set)" : ""}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="rent-rows">
+            <div className="rent-row head">
+              <span className="rr-when">when</span>
+              <span className="rr-get">get</span>
+            </div>
+            {STAGE_NAMES.map((name, i) => (
+              <div key={i} className={`rent-row ${prop && prop.stage === i ? "active" : ""}`}>
+                <span className="rr-when">
+                  {i === 0 ? "with rent" : `with ${name}`}
+                </span>
+                <span className="rr-get">{pkr(space.rent![i])}</span>
+              </div>
+            ))}
+            <div className="rent-note">Base rent doubles with a full colour set.</div>
+          </div>
         )}
+
         {space.type === "airport" && (
-          <table className="rent-table">
-            <tbody>
-              <tr><td>1 airport</td><td>{pkr(250000)}</td></tr>
-              <tr><td>2 airports</td><td>{pkr(500000)}</td></tr>
-              <tr><td>3 airports</td><td>{pkr(1000000)}</td></tr>
-              <tr><td>4 airports</td><td>{pkr(2000000)}</td></tr>
-            </tbody>
-          </table>
+          <div className="rent-rows">
+            <div className="rent-row head">
+              <span className="rr-when">when</span>
+              <span className="rr-get">get</span>
+            </div>
+            {airportRents.map((r, i) => (
+              <div key={i} className="rent-row">
+                <span className="rr-when">{i + 1} airport{i > 0 ? "s" : ""} owned</span>
+                <span className="rr-get">{pkr(r)}</span>
+              </div>
+            ))}
+          </div>
         )}
+
         {space.type === "utility" && (
-          <p className="prop-info">
-            Rent = dice roll × <strong>4</strong> (one utility) or × <strong>10</strong> (both) × Rs. 10,000.
-          </p>
+          <div className="rent-rows">
+            <div className="rent-row"><span className="rr-when">with 1 utility</span><span className="rr-get">dice × 4</span></div>
+            <div className="rent-row"><span className="rr-when">with both utilities</span><span className="rr-get">dice × 10</span></div>
+          </div>
         )}
 
-        <div className="prop-meta">
-          {space.price != null && <span>Price: <strong>{pkr(space.price)}</strong></span>}
-          {space.mortgage != null && <span>Mortgage: <strong>{pkr(space.mortgage)}</strong></span>}
-          {space.buildCost != null && <span>Build: <strong>{pkr(space.buildCost)}</strong></span>}
-          {space.amount != null && <span>Amount: <strong>{pkr(space.amount)}</strong></span>}
-        </div>
-
-        <div className="prop-owner">
-          {owner ? (
-            <>Owned by <span style={{ color: owner.color }}>{owner.token} {owner.name}</span>
-              {prop?.mortgaged && " · MORTGAGED"}
-              {space.type === "city" && prop && prop.stage > 0 && ` · ${STAGE_NAMES[prop.stage]}`}
-            </>
-          ) : (
-            <span className="muted">Unowned — the bank holds this property.</span>
+        <div className="pcard-foot">
+          {space.price != null && (
+            <div><span className="pcf-lbl">Price</span><span className="pcf-val">{pkr(space.price)}</span></div>
+          )}
+          {space.buildCost != null && (
+            <div><span className="pcf-lbl">🏗️ Build</span><span className="pcf-val">{pkr(space.buildCost)}</span></div>
+          )}
+          {space.mortgage != null && (
+            <div><span className="pcf-lbl">💱 Mortgage</span><span className="pcf-val">{pkr(space.mortgage)}</span></div>
+          )}
+          {space.amount != null && (
+            <div><span className="pcf-lbl">Pay</span><span className="pcf-val">{pkr(space.amount)}</span></div>
           )}
         </div>
 

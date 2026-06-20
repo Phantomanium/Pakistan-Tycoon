@@ -146,7 +146,7 @@ h1, h2, h3 { margin: 0 0 0.4em; }
   transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
 .tile:hover { transform: scale(1.04); z-index: 5; box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
-.tile.owned { box-shadow: inset 0 0 0 2px var(--owner); }
+.tile.owned { box-shadow: inset 0 0 0 3px var(--owner); }
 .tile-band { height: 16%; min-height: 8px; width: 100%; }
 .tile-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 2px; text-align: center; }
 .tile-icon { font-size: clamp(0.8rem, 2.2vmin, 1.4rem); }
@@ -158,21 +158,42 @@ h1, h2, h3 { margin: 0 0 0.4em; }
 .corner .tile-name { font-size: clamp(0.5rem, 1.3vmin, 0.8rem); }
 .corner { background: linear-gradient(135deg, var(--panel-2), var(--tile)); }
 
-.tile-owner-flag {
-  position: absolute; top: 2px; right: 2px; width: 16px; height: 16px;
-  border-radius: 4px; font-size: 0.6rem; display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
-}
-.tile-tokens { position: absolute; bottom: 1px; left: 1px; right: 1px; display: flex; flex-wrap: wrap; gap: 1px; justify-content: center; }
-.tok {
-  width: clamp(11px, 2.1vmin, 18px); height: clamp(11px, 2.1vmin, 18px);
-  border-radius: 50%; border: 2px solid; background: rgba(0,0,0,0.55);
+/* Ownership marker — a clear, solid colored disc in the corner */
+.tile-owner-dot {
+  position: absolute; top: 3px; right: 3px;
+  width: clamp(16px, 3vmin, 24px); height: clamp(16px, 3vmin, 24px);
+  border-radius: 50%; border: 2px solid #fff;
   display: flex; align-items: center; justify-content: center;
-  font-size: clamp(7px, 1.4vmin, 11px);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5); z-index: 4;
 }
-[data-theme="light"] .tok { background: rgba(255,255,255,0.85); }
+[data-theme="light"] .tile-owner-dot { border-color: rgba(255,255,255,0.9); }
+.tod-token { font-size: clamp(8px, 1.6vmin, 12px); filter: drop-shadow(0 1px 1px rgba(0,0,0,0.6)); }
+
+/* Player tokens — solid colored circles, layered when several share a tile */
+.tile-tokens { position: absolute; bottom: 2px; left: 0; right: 0; display: flex; gap: 0; justify-content: center; padding: 0 2px; pointer-events: none; }
+.tok {
+  width: clamp(15px, 3vmin, 26px); height: clamp(15px, 3vmin, 26px);
+  border-radius: 50%; border: 2px solid #fff;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+  margin-left: -6px; transition: transform 0.12s ease;
+}
+.tok:first-child { margin-left: 0; }
+[data-theme="light"] .tok { border-color: rgba(255,255,255,0.95); }
+.tok-glyph { font-size: clamp(9px, 1.8vmin, 14px); filter: drop-shadow(0 1px 1px rgba(0,0,0,0.55)); }
+.tok.active { transform: scale(1.25); z-index: 6; box-shadow: 0 0 0 2px var(--tok), 0 0 8px var(--tok), 0 3px 7px rgba(0,0,0,0.6); }
 .tok.hop { animation: hop 0.4s ease infinite; }
-@keyframes hop { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes hop { 0%,100% { transform: translateY(0) scale(1.25); } 50% { transform: translateY(-5px) scale(1.25); } }
+
+/* Translucent arrow hovering over the active player's tile */
+.turn-arrow {
+  position: absolute; top: 1px; left: 50%; transform: translateX(-50%);
+  font-size: clamp(13px, 2.6vmin, 22px); line-height: 1; z-index: 7;
+  opacity: 0.82; pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.55));
+  animation: arrow-bob 1s ease-in-out infinite;
+}
+@keyframes arrow-bob { 0%,100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, 3px); } }
 
 /* board center */
 .board-center {
@@ -184,7 +205,11 @@ h1, h2, h3 { margin: 0 0 0.4em; }
 .center-emblem { font-size: clamp(1.8rem, 7vmin, 4rem); }
 .center-title { font-family: var(--serif); font-size: clamp(1rem, 3.6vmin, 2.2rem); font-weight: 700; letter-spacing: 2px; color: var(--gold); }
 .center-sub { font-size: clamp(0.5rem, 1.4vmin, 0.85rem); color: var(--muted); letter-spacing: 1px; }
-.dice-area { display: flex; gap: 0.8rem; }
+.dice-area { display: flex; gap: 0.8rem; border-radius: 14px; padding: 6px; transition: transform 0.1s ease, box-shadow 0.15s ease; }
+.dice-area.clickable { cursor: pointer; box-shadow: 0 0 0 2px var(--gold), 0 0 18px rgba(232,195,60,0.35); animation: dice-pulse 1.6s ease-in-out infinite; }
+.dice-area.clickable:hover { transform: scale(1.06); }
+@keyframes dice-pulse { 0%,100% { box-shadow: 0 0 0 2px var(--gold), 0 0 14px rgba(232,195,60,0.3); } 50% { box-shadow: 0 0 0 2px var(--gold), 0 0 24px rgba(232,195,60,0.55); } }
+.dice-hint { font-size: clamp(0.55rem, 1.4vmin, 0.82rem); color: var(--gold); font-weight: 600; margin-top: -0.3rem; }
 .die {
   width: clamp(28px, 6vmin, 56px); aspect-ratio: 1;
   background: #fbf7ec; border-radius: 12px; padding: 12%;
@@ -201,9 +226,27 @@ h1, h2, h3 { margin: 0 0 0.4em; }
   background: var(--panel); border: 2px solid; border-radius: 999px;
   padding: 0.35rem 0.9rem; box-shadow: var(--shadow); flex-wrap: wrap; justify-content: center;
 }
-.ct-token { font-size: 1.3rem; }
+.ct-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
 .ct-name { font-weight: 700; }
 .ct-phase { color: var(--muted); font-size: 0.8rem; }
+
+/* Latest action, surfaced in the middle of the board */
+.center-log {
+  background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--line);
+  border-radius: 10px; padding: 0.4rem 0.7rem; max-width: 92%;
+  font-size: clamp(0.6rem, 1.5vmin, 0.9rem); line-height: 1.25; box-shadow: var(--shadow);
+  animation: center-log-in 0.3s ease;
+}
+@keyframes center-log-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+.center-log.k-money { border-left-color: var(--gold); }
+.center-log.k-rent { border-left-color: var(--rent); }
+.center-log.k-buy { border-left-color: var(--good); }
+.center-log.k-build { border-left-color: #4fa3ff; }
+.center-log.k-event { border-left-color: var(--gold); background: rgba(232,195,60,0.12); font-weight: 600; }
+.center-log.k-card { border-left-color: #b07bd6; background: rgba(176,123,214,0.1); }
+.center-log.k-jail { border-left-color: var(--warn); }
+.center-log.k-bad { border-left-color: var(--bad); }
+.center-log.k-good { border-left-color: var(--good); background: rgba(52,200,120,0.12); font-weight: 600; }
 .center-event {
   background: rgba(232,195,60,0.14); border: 1px solid var(--gold-deep);
   border-radius: 10px; padding: 0.4rem 0.7rem; font-size: clamp(0.55rem, 1.4vmin, 0.82rem);
@@ -261,18 +304,32 @@ h1, h2, h3 { margin: 0 0 0.4em; }
 .modal { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); padding: 1.2rem; width: min(560px, 95vw); max-height: 92vh; overflow-y: auto; animation: pop 0.18s ease; }
 @keyframes pop { from { transform: scale(0.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-.prop-band { font-size: 0.7rem; font-weight: 700; letter-spacing: 1px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.4); padding: 0.3rem 0.7rem; border-radius: 8px; display: inline-block; margin-bottom: 0.5rem; }
-.prop-title { font-family: var(--serif); font-size: 1.6rem; }
-.prop-bonus { color: var(--muted); font-style: italic; margin-top: -0.2rem; }
-.rent-table { width: 100%; border-collapse: collapse; margin: 0.6rem 0; font-size: 0.88rem; }
-.rent-table td { padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--line); }
-.rent-table td:last-child { text-align: right; font-weight: 600; }
-.rent-table tr.active { background: rgba(232,195,60,0.16); }
-.prop-info { font-size: 0.88rem; }
-.prop-meta { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; font-size: 0.82rem; color: var(--muted); margin: 0.5rem 0; }
-.prop-meta strong { color: var(--text); }
-.prop-owner { margin: 0.5rem 0; font-size: 0.9rem; }
-.prop-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.6rem; }
+/* ── property card (Richup-style) ─────────────────────────────────────── */
+.pcard { position: relative; width: min(340px, 95vw); padding-top: 0.4rem; }
+.pcard-top { position: absolute; top: 0; left: 0; right: 0; height: 8px; border-radius: 18px 18px 0 0; }
+.pcard-head { text-align: center; }
+.pcard-group { display: inline-block; font-size: 0.66rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.45); padding: 0.22rem 0.7rem; border-radius: 999px; }
+.pcard-title { font-family: var(--serif); font-size: 1.7rem; margin: 0.5rem 0 0.25rem; }
+.pcard-owner { display: flex; align-items: center; justify-content: center; gap: 0.4rem; font-size: 0.85rem; color: var(--muted); }
+.pcard-owner .od { width: 12px; height: 12px; border-radius: 50%; border: 1px solid #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.4); }
+.pcard-bonus { color: var(--muted); font-style: italic; font-size: 0.82rem; text-align: center; margin: 0.5rem 0 0.2rem; }
+
+.rent-rows { display: flex; flex-direction: column; margin: 0.8rem 0 0.2rem; }
+.rent-row { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--line); font-size: 0.92rem; }
+.rent-row .rr-when { color: var(--text); }
+.rent-row .rr-get { font-weight: 800; color: var(--gold); }
+.rent-row.head { border-bottom: 1px solid var(--line); }
+.rent-row.head .rr-when, .rent-row.head .rr-get { color: var(--muted); font-weight: 600; font-size: 0.82rem; text-transform: lowercase; }
+.rent-row.active { background: rgba(232,195,60,0.16); border-radius: 8px; border-bottom-color: transparent; }
+.rent-row.active .rr-when { font-weight: 700; }
+.rent-note { font-size: 0.72rem; color: var(--muted); font-style: italic; padding: 0.45rem 0.5rem 0; }
+
+.pcard-foot { display: flex; gap: 0.4rem; margin-top: 0.9rem; padding-top: 0.8rem; border-top: 1px solid var(--line); }
+.pcard-foot > div { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
+.pcf-lbl { font-size: 0.68rem; color: var(--muted); }
+.pcf-val { font-weight: 800; font-size: 0.95rem; }
+
+.prop-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.9rem 0 0.6rem; }
 
 /* auction */
 .auction-modal h2 { text-align: center; }
